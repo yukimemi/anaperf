@@ -10,7 +10,7 @@
     - [o]min        : Y軸MIN値
   .OUTPUTS
     - グラフ化エクセル
-  .Last Change : 2017/04/13 20:47:58.
+  .Last Change : 2017/04/14 15:16:46.
 #>
 param(
   [string]$csv = (Read-Host "Enter csv path"),
@@ -984,6 +984,9 @@ function Start-Main {
       $chart.HasTitle = $true
       Write-Host "グラフタイトルを[$($csv.name)]に設定します"
       $chart.ChartTitle.Text = $csv.name
+
+      # Change font size.
+      $chart.Legend.Format.TextFrame2.TextRange.Font.Size = 7
     }
 
     # 保存

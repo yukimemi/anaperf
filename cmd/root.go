@@ -59,6 +59,14 @@ var (
 	// RmCsv is whether remove output csv.
 	RmCsv bool
 
+	// Begin is begin of data range. (HHMMSS)
+	Begin     string
+	beginTime *time.Time
+
+	// End is end of data range. (HHMMSS)
+	End     string
+	endTime *time.Time
+
 	// Match is regexp target performance name.
 	Match   string
 	matchRe *regexp.Regexp
@@ -145,10 +153,14 @@ func init() {
 	// Top performance data count.
 	RootCmd.PersistentFlags().IntVar(&AverageCnt, "average", 10, "Top count on average data")
 	RootCmd.PersistentFlags().IntVar(&MedianCnt, "median", 10, "Top count on median data")
-	RootCmd.PersistentFlags().IntVar(&ModeCnt, "mode", 10, "Top count on mode data")
+	// RootCmd.PersistentFlags().IntVar(&ModeCnt, "mode", 10, "Top count on mode data") TODO:
 	RootCmd.PersistentFlags().IntVar(&RangeCnt, "range", 10, "Top count on range data")
 	RootCmd.PersistentFlags().IntVar(&MaxCnt, "max", 10, "Top count on max data")
-	RootCmd.PersistentFlags().IntVar(&VarianceCnt, "variance", 10, "Top count on variance data")
+	// RootCmd.PersistentFlags().IntVar(&VarianceCnt, "variance", 10, "Top count on variance data") TODO:
+
+	// Begin and end option.
+	RootCmd.PersistentFlags().StringVar(&Begin, "begin", "", "Begin of data range")
+	RootCmd.PersistentFlags().StringVar(&End, "end", "", "End of data range")
 
 	// Remove csv option.
 	RootCmd.PersistentFlags().BoolVar(&RmCsv, "rmcsv", false, "Remove csv file")
@@ -202,23 +214,42 @@ func readCsv(csvFile string) (Perfs, error) {
 			return Perfs{}, fmt.Errorf("[%v] is not perf file. column len: [%v]", csvFile, len(r))
 		}
 
-		rowCnt++
 		row++
-		fmt.Fprintf(os.Stderr, "Row count: %d\r", rowCnt)
 
 		dateTime := ""
+		if row != 1 {
+			dateTime = r[0]
+			if beginTime != nil || endTime != nil {
+				dt, err := time.Parse("01/02/2006 15:04:05.000", dateTime)
+				if err != nil {
+					return Perfs{}, err
+				}
+				if beginTime != nil {
+					if getNanosecond(dt) < getNanosecond(*beginTime) {
+						continue
+					}
+				}
+				if endTime != nil {
+					if getNanosecond(dt) > getNanosecond(*endTime) {
+						continue
+					}
+				}
+			}
+			DateTimeVec = append(DateTimeVec, dateTime)
+		}
+
+		rowCnt++
+		fmt.Fprintf(os.Stderr, "Row count: %d\r", rowCnt)
+
 		for col, data := range r {
-			if col == 0 {
-				if row != 1 {
-					dateTime = data
-					DateTimeVec = append(DateTimeVec, dateTime)
+			if row == 1 {
+				// Get header.
+				if col != 0 {
+					perfs = append(perfs, Perf{Name: data, Data: make([]DataRow, 0)})
 				}
 				continue
 			}
-			if row == 1 {
-				// Get header.
-				perfs = append(perfs, Perf{Name: data, Data: make([]DataRow, 0)})
-			} else {
+			if col != 0 {
 				// Get data.
 				data, err := strconv.ParseFloat(data, 64)
 				if err != nil {
@@ -267,6 +298,16 @@ func analyze(perfs Perfs) (chan Perf, error) {
 			}
 
 			perf.Average = perf.Sum / float64(len(perf.Data))
+
+			sortData := make([]DataRow, len(perf.Data))
+			copy(sortData, perf.Data)
+			sort.Slice(sortData, func(i, j int) bool {
+				return sortData[i].Data < sortData[j].Data
+			})
+
+			perf.Median = sortData[int(len(sortData)/2)].Data
+
+			perf.Range = sortData[len(sortData)-1].Data - sortData[0].Data
 
 			q <- perf
 		}(perf)
@@ -317,6 +358,22 @@ func runE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Parse begin and end time
+	if Begin != "" {
+		beginTime = new(time.Time)
+		*beginTime, err = time.Parse("150405", Begin)
+		if err != nil {
+			return err
+		}
+	}
+	if End != "" {
+		endTime = new(time.Time)
+		*endTime, err = time.Parse("150405", End)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Get data and store.
 	perfs, err := readCsv(args[0])
 	if err != nil {
@@ -336,6 +393,7 @@ func runE(cmd *cobra.Command, args []string) error {
 
 	anaPerfs := Perfs{}
 
+	// Get only MaxCnt data.
 	if len(perfs) < MaxCnt {
 		MaxCnt = len(perfs)
 	} else {
@@ -348,8 +406,9 @@ func runE(cmd *cobra.Command, args []string) error {
 		anaPerfs = addPerf(anaPerfs, perf)
 	}
 
-	if len(anaPerfs) < AverageCnt {
-		AverageCnt = len(anaPerfs)
+	// Get only AverageCnt data.
+	if len(perfs) < AverageCnt {
+		AverageCnt = len(perfs)
 	} else {
 		// Average sort.
 		sort.Slice(perfs, func(i, j int) bool {
@@ -360,7 +419,33 @@ func runE(cmd *cobra.Command, args []string) error {
 		anaPerfs = addPerf(anaPerfs, perf)
 	}
 
-	// Print and change format to csv array.
+	// Get only Median data.
+	if len(perfs) < MedianCnt {
+		MedianCnt = len(perfs)
+	} else {
+		// Average sort.
+		sort.Slice(perfs, func(i, j int) bool {
+			return perfs[i].Median > perfs[j].Median
+		})
+	}
+	for _, perf := range perfs[0:MedianCnt] {
+		anaPerfs = addPerf(anaPerfs, perf)
+	}
+
+	// Get only Range data.
+	if len(perfs) < RangeCnt {
+		RangeCnt = len(perfs)
+	} else {
+		// Max sort.
+		sort.Slice(perfs, func(i, j int) bool {
+			return perfs[i].Range > perfs[j].Range
+		})
+	}
+	for _, perf := range perfs[0:RangeCnt] {
+		anaPerfs = addPerf(anaPerfs, perf)
+	}
+
+	// Change format to csv array.
 	header := []string{"DateTime"}
 	for _, perf := range anaPerfs {
 		header = append(header, perf.Name)
@@ -399,6 +484,12 @@ func runE(cmd *cobra.Command, args []string) error {
 	}
 	writer.Flush()
 	fmt.Printf("Write to [%s]. ([%d] line)\n", OutCsv, rowCnt)
+
+	// Print.
+	fmt.Printf("%100v %25v %25v %25v %25v\n", "Name", "Average", "Max", "Median", "Range")
+	for _, perf := range anaPerfs {
+		fmt.Printf("%100v %25v %25v %25v %25v\n", perf.Name, perf.Average, perf.Max, perf.Median, perf.Range)
+	}
 
 	// Output to excel.
 	bin, err := Asset("excelgraph.ps1")
@@ -470,9 +561,15 @@ func runE(cmd *cobra.Command, args []string) error {
 	// Remove csv files.
 	if RmCsv {
 		c.Close()
-		fmt.Printf("Revove: [%v]\n", OutCsv)
+		fmt.Printf("Remove: [%v]\n", OutCsv)
 		os.Remove(OutCsv)
 	}
 
 	return nil
+}
+
+func getNanosecond(t time.Time) time.Duration {
+	return time.Duration(t.Hour())*time.Hour +
+		time.Duration(t.Minute())*time.Minute +
+		time.Duration(t.Nanosecond())*time.Nanosecond
 }
