@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,6 +29,8 @@ import (
 const (
 	// DateCol is Date column number.
 	DateCol = 0
+
+	ps1 = "excelgraph.ps1"
 )
 
 const (
@@ -492,59 +495,57 @@ func runE(cmd *cobra.Command, args []string) error {
 	}
 
 	// Output to excel.
-	bin, err := Asset("excelgraph.ps1")
+	tmp := os.TempDir()
+	ps := filepath.Join(tmp, ps1)
+	err = RestoreAsset(tmp, ps1)
 	if err != nil {
 		return err
 	}
+	defer os.RemoveAll(ps)
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		return err
+	command := core.Cmd{}
+	cmdCmd := "powershell"
+	cmdArg := []string{
+		"-NoLogo",
+		"-NonInteractive",
+		"-InputFormat",
+		"None",
+		"-ExecutionPolicy",
+		"ByPass",
+		"-File",
+		ps,
+		OutCsv,
+		OutExcel,
 	}
-
-	err = os.Setenv("scriptPath", filepath.Join(pwd, "excelgraph"))
-	if err != nil {
-		return err
-	}
-
-	var command core.Cmd
+	fmt.Println("Execute:", cmdCmd, strings.Join(cmdArg, " "))
 
 	if Ymax != 0 && Ymin != 0 {
 		command = core.Cmd{Cmd: exec.Command(
-			"powershell",
-			"-Command",
-			"& (iex '{"+string(bin)+"}')",
-			OutCsv,
-			OutExcel,
-			fmt.Sprint(Ymax),
-			fmt.Sprint(Ymin),
+			cmdCmd,
+			append(cmdArg, []string{
+				fmt.Sprint(Ymax),
+				fmt.Sprint(Ymin),
+			}...)...,
 		)}
 	} else if Ymax != 0 {
 		command = core.Cmd{Cmd: exec.Command(
-			"powershell",
-			"-Command",
-			"& (iex '{"+string(bin)+"}')",
-			OutCsv,
-			OutExcel,
-			fmt.Sprint(Ymax),
+			cmdCmd,
+			append(cmdArg, []string{
+				fmt.Sprint(Ymax),
+			}...)...,
 		)}
 	} else if Ymin != 0 {
 		command = core.Cmd{Cmd: exec.Command(
-			"powershell",
-			"-Command",
-			"& (iex '{"+string(bin)+"}')",
-			OutCsv,
-			OutExcel,
-			"-min",
-			fmt.Sprint(Ymin),
+			cmdCmd,
+			append(cmdArg, []string{
+				"-min",
+				fmt.Sprint(Ymin),
+			}...)...,
 		)}
 	} else {
 		command = core.Cmd{Cmd: exec.Command(
-			"powershell",
-			"-Command",
-			"& (iex '{"+string(bin)+"}')",
-			OutCsv,
-			OutExcel,
+			cmdCmd,
+			cmdArg...,
 		)}
 	}
 

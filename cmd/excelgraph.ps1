@@ -1,16 +1,16 @@
 <#
   .SYNOPSYS
-    csvã‚°ãƒ©ãƒ•åŒ–ãƒ„ãƒ¼ãƒ«
+    csvƒOƒ‰ƒt‰»ƒc[ƒ‹
   .DESCRIPTION
-    csvã‚’ã‚°ãƒ©ãƒ•åŒ–ã™ã‚‹
+    csv‚ğƒOƒ‰ƒt‰»‚·‚é
   .INPUTS
     - [n]csv        : csv
-    - [o]out        : Excelä¿å­˜å…ˆ
-    - [o]max        : Yè»¸MAXå€¤
-    - [o]min        : Yè»¸MINå€¤
+    - [o]out        : Excel•Û‘¶æ
+    - [o]max        : Y²MAX’l
+    - [o]min        : Y²MIN’l
   .OUTPUTS
-    - ã‚°ãƒ©ãƒ•åŒ–ã‚¨ã‚¯ã‚»ãƒ«
-  .Last Change : 2017/04/14 15:16:46.
+    - ƒOƒ‰ƒt‰»ƒGƒNƒZƒ‹
+  .Last Change : 2017/04/17 15:12:02.
 #>
 param(
   [string]$csv = (Read-Host "Enter csv path"),
@@ -829,13 +829,13 @@ $CONST = @{
 
 <#
   .SYNOPSYS
-    Initå‡¦ç†
+    Initˆ—
   .DESCRIPTION
-    Initå‡¦ç†ã‚’å®Ÿè¡Œã™ã‚‹
+    Initˆ—‚ğÀs‚·‚é
   .INPUTS
-    - ãªã—
+    - ‚È‚µ
   .OUTPUTS
-    - ãªã—
+    - ‚È‚µ
 #>
 function Start-Init {
 
@@ -844,9 +844,9 @@ function Start-Init {
   param()
   trap { Write-Host "[Start-Init] Error $_"; throw $_ }
 
-  # ã‚¢ã‚»ãƒ³ãƒ–ãƒªãƒ­ãƒ¼ãƒ‰
+  # ƒAƒZƒ“ƒuƒŠƒ[ƒh
   Add-Type -Assembly Microsoft.VisualBasic
-  # App Objæº–å‚™
+  # App Obj€”õ
   $script:app = @{}
 
   $cmdFullPath = & {
@@ -861,22 +861,22 @@ function Start-Init {
   $app.Add("cmdName", [System.IO.Path]::GetFileNameWithoutExtension($app.cmdFile))
   $app.Add("cmdFileName", [System.IO.Path]::GetFileName($app.cmdFile))
 
-  # å®Ÿè¡Œãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
+  # ÀsƒfƒBƒŒƒNƒgƒŠ
   $app.Add("pwd", [System.IO.Path]::GetFullPath((Get-Location).Path))
-  # ãƒ—ãƒ­ã‚»ã‚¹ID
+  # ƒvƒƒZƒXID
   $app.Add("pId", $PID)
-  # ã‚¹ãƒ¬ãƒƒãƒ‰ID
+  # ƒXƒŒƒbƒhID
   $app.Add("threadId", [System.Threading.Thread]::CurrentThread.ManagedThreadId)
 
-  # csvæƒ…å ±
+  # csvî•ñ
   $app.Add("csv", $csv)
-  # Yè»¸maxå€¤
+  # Y²max’l
   $max = & { if (![string]::IsNullOrEmpty($max)) { [long]$max } else { $null } }
   $app.Add("max", $max)
-  # Yè»¸minå€¤
+  # Y²min’l
   $min = & { if (![string]::IsNullOrEmpty($min)) { [long]$min } else { $null } }
   $app.Add("min", $min)
-  # ä¿å­˜Excelå
+  # •Û‘¶Excel–¼
   if ($app.csv -notmatch "\\") {
     $app.csv = Join-Path $app.pwd $app.csv
   }
@@ -885,33 +885,33 @@ function Start-Init {
   $out = & { if (![string]::IsNullOrEmpty($out)) { $out } else { $outExcel } }
   $app.Add("out", [System.IO.Path]::GetFullPath($out))
 
-  # æˆ»ã‚Šå€¤è¨­å®š
+  # –ß‚è’lİ’è
   $app.Add("const", @{
     SUCCESS = 0
     WARN = 1
     ERROR = 2
   })
 
-  # æˆ»ã‚Šå€¤åˆæœŸå€¤
+  # –ß‚è’l‰Šú’l
   $app.Add("result", $app.const.ERROR)
 
-  Write-Host "[Start-Init] å‡¦ç†ã‚’é–‹å§‹ã—ã¾ã™ã€‚"
-  Write-Host "[Start-Init] å…¥åŠ›csv              : [$($app.csv)]"
-  Write-Host "[Start-Init] Excelä¿å­˜å…ˆ          : [$($app.out)]"
-  Write-Host "[Start-Init] Yè»¸Maxå€¤             : [$($app.max)]"
-  Write-Host "[Start-Init] Yè»¸minå€¤             : [$($app.min)]"
+  Write-Host "[Start-Init] ˆ—‚ğŠJn‚µ‚Ü‚·B"
+  Write-Host "[Start-Init] “ü—Ícsv              : [$($app.csv)]"
+  Write-Host "[Start-Init] Excel•Û‘¶æ          : [$($app.out)]"
+  Write-Host "[Start-Init] Y²Max’l             : [$($app.max)]"
+  Write-Host "[Start-Init] Y²min’l             : [$($app.min)]"
 
 }
 
 <#
   .SYNOPSYS
-    Mainå‡¦ç†
+    Mainˆ—
   .DESCRIPTION
-    Mainå‡¦ç†ã‚’å®Ÿè¡Œã™ã‚‹
+    Mainˆ—‚ğÀs‚·‚é
   .INPUTS
-    - ãªã—
+    - ‚È‚µ
   .OUTPUTS
-    - å‡¦ç†çµæœ - 0(æ­£å¸¸çµ‚äº†), 1(è­¦å‘Šçµ‚äº†), 2(ç•°å¸¸çµ‚äº†)
+    - ˆ—Œ‹‰Ê - 0(³íI—¹), 1(ŒxI—¹), 2(ˆÙíI—¹)
 #>
 function Start-Main {
 
@@ -921,13 +921,13 @@ function Start-Main {
 
   try {
 
-    # é–‹å§‹æ™‚é–“è¨ˆæ¸¬
+    # ŠJnŠÔŒv‘ª
     $startTime = Get-Date
 
-    # Initå‡¦ç†å®Ÿè¡Œ
+    # Initˆ—Às
     Start-Init
 
-    # ç¾åœ¨æ—¥æ™‚
+    # Œ»İ“ú
     $now = Get-Date -Format "yyyyMMddHHmmss"
 
     # Init excel object.
@@ -936,20 +936,20 @@ function Start-Main {
     $excel.Application.DisplayAlerts = $false
     $excel.Application.ReferenceStyle = $CONST.xlR1C1
 
-    # csvå±•é–‹
+    # csv“WŠJ
     Get-ChildItem $app.csv | % {
 
       $csv = Get-FilePathInfo $_.FullName
 
-      # ã‚°ãƒ©ãƒ•åŒ–ã™ã‚‹
-      Write-Debug "ã‚°ãƒ©ãƒ•åŒ–é–‹å§‹"
+      # ƒOƒ‰ƒt‰»‚·‚é
+      Write-Debug "ƒOƒ‰ƒt‰»ŠJn"
       $book = $excel.Workbooks.Add()
 
-      # csvèª­ã¿è¾¼ã¿
-      Write-Host "[$($csv.full)]ã‚’èª­ã¿è¾¼ã¿ã¾ã™..."
+      # csv“Ç‚İ‚İ
+      Write-Host "[$($csv.full)]‚ğ“Ç‚İ‚İ‚Ü‚·..."
 
       $dws = $book.Worksheets.Item(1)
-      Write-Debug "CSVã‚’Excelã«èª­ã¿è¾¼ã¿"
+      Write-Debug "CSV‚ğExcel‚É“Ç‚İ‚İ"
       $table = $dws.QueryTables.Add("TEXT;$($csv.full)", $dws.Cells.Item(1, 1))
       $table.Name = $csv.name
       $table.TextFileParseType = $CONST.xlDelimited
@@ -961,37 +961,37 @@ function Start-Main {
       $maxRow = $dws.Cells.Item($dws.Rows.Count, 1).End($CONST.xlUp).Row
       $maxCol = $dws.Cells.Item(1, $dws.Columns.Count).End($CONST.xlToLeft).Column
 
-      # ã‚°ãƒ©ãƒ•åŒ–
-      Write-Host "[$($csv.name)]ã‚’ã‚°ãƒ©ãƒ•åŒ–ã—ã¾ã™..."
+      # ƒOƒ‰ƒt‰»
+      Write-Host "[$($csv.name)]‚ğƒOƒ‰ƒt‰»‚µ‚Ü‚·..."
       $chart = $book.Charts.Add($dws)
       $chart.SetSourceData($dws.Range($dws.Cells.Item(1, 1), $dws.Cells.Item($maxRow, $maxCol)))
       $chart.ChartType = $CONST.xlLine
 
-      # Yè»¸maxã®æŒ‡å®šãŒã‚ã‚Œã°è¨­å®š
+      # Y²max‚Ìw’è‚ª‚ ‚ê‚Îİ’è
       if ($app.max -ne $null) {
-        Write-Host "Yè»¸MAXå€¤ã‚’[$($app.max)]ã«è¨­å®šã—ã¾ã™"
+        Write-Host "Y²MAX’l‚ğ[$($app.max)]‚Éİ’è‚µ‚Ü‚·"
         $chart.Axes($CONST.xlValue).MaximumScale = $app.max
       }
-      # Yè»¸minã®æŒ‡å®šãŒã‚ã‚Œã°è¨­å®š
+      # Y²min‚Ìw’è‚ª‚ ‚ê‚Îİ’è
       if ($app.min -ne $null) {
-        Write-Host "Yè»¸MINå€¤ã‚’[$($app.min)]ã«è¨­å®šã—ã¾ã™"
+        Write-Host "Y²MIN’l‚ğ[$($app.min)]‚Éİ’è‚µ‚Ü‚·"
         $chart.Axes($CONST.xlValue).MinimumScale = $app.min
       }
-      # ãªãœã‹å¤‰æ•°ã ã¨ã‚¨ãƒ©ãƒ¼ã«ãªã‚‹ãƒ»ãƒ»ãƒ»
+      # ‚È‚º‚©•Ï”‚¾‚ÆƒGƒ‰[‚É‚È‚éEEE
       # $chart.SetElement($CONST.msoElementLegendBottom)
       # $chart.SetElement($CONST.msoElementLegendRight)
       $chart.SetElement(101)
       $chart.HasTitle = $true
-      Write-Host "ã‚°ãƒ©ãƒ•ã‚¿ã‚¤ãƒˆãƒ«ã‚’[$($csv.name)]ã«è¨­å®šã—ã¾ã™"
+      Write-Host "ƒOƒ‰ƒtƒ^ƒCƒgƒ‹‚ğ[$($csv.name)]‚Éİ’è‚µ‚Ü‚·"
       $chart.ChartTitle.Text = $csv.name
 
       # Change font size.
       $chart.Legend.Format.TextFrame2.TextRange.Font.Size = 7
     }
 
-    # ä¿å­˜
+    # •Û‘¶
     New-Item -Force -ItemType Directory (Split-Path -Parent $app.out) > $null
-    Write-Host "[$($app.out)]ã¸ä¿å­˜ã—ã¾ã™ã€‚"
+    Write-Host "[$($app.out)]‚Ö•Û‘¶‚µ‚Ü‚·B"
     $book.SaveAs($app.out)
 
     $app.result = $app.const.SUCCESS
@@ -999,11 +999,11 @@ function Start-Main {
   } catch {
     Write-Host "Error ! [$_]"
   } finally {
-    Write-Host "å‡¦ç†ã‚’çµ‚äº†ã—ã¾ã™ã€‚ExitCode: [$($app.result)]"
-    # çµ‚äº†æ™‚é–“è¨ˆæ¸¬
+    Write-Host "ˆ—‚ğI—¹‚µ‚Ü‚·BExitCode: [$($app.result)]"
+    # I—¹ŠÔŒv‘ª
     $endTime = Get-Date
     $span = $endTime - $startTime
-    Write-Host ("å‡¦ç†æ™‚é–“: {0} {1:00}:{2:00}:{3:00}.{4:000}" -f $span.Days, $span.Hours, $span.Minutes, $span.Seconds, $span.Milliseconds)
+    Write-Host ("ˆ—ŠÔ: {0} {1:00}:{2:00}:{3:00}.{4:000}" -f $span.Days, $span.Hours, $span.Minutes, $span.Seconds, $span.Milliseconds)
     $app.result
     if ($excel) {
       $excel.Quit()
@@ -1013,13 +1013,13 @@ function Start-Main {
 
 <#
   .SYNOPSYS
-    ãƒ•ã‚¡ã‚¤ãƒ«æƒ…å ±å–å¾—
+    ƒtƒ@ƒCƒ‹î•ñæ“¾
   .DESCRIPTION
-    ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«åã€ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªåãªã©ã‚’å–å¾—ã™ã‚‹
+    ƒtƒ@ƒCƒ‹ƒpƒX‚©‚çƒtƒ@ƒCƒ‹–¼AƒfƒBƒŒƒNƒgƒŠ–¼‚È‚Ç‚ğæ“¾‚·‚é
   .INPUTS
-    - ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
+    - ƒtƒ@ƒCƒ‹ƒpƒX
   .OUTPUTS
-    - ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹æƒ…å ±
+    - ƒtƒ@ƒCƒ‹ƒpƒXî•ñ
 #>
 function Get-FilePathInfo {
 
