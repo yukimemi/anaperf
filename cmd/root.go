@@ -162,8 +162,8 @@ func init() {
 	// RootCmd.PersistentFlags().IntVar(&VarianceCnt, "variance", 10, "Top count on variance data") TODO:
 
 	// Begin and end option.
-	RootCmd.PersistentFlags().StringVar(&Begin, "begin", "", "Begin of data range")
-	RootCmd.PersistentFlags().StringVar(&End, "end", "", "End of data range")
+	RootCmd.PersistentFlags().StringVar(&Begin, "begin", "", "Begin of data range (HHMMSS)")
+	RootCmd.PersistentFlags().StringVar(&End, "end", "", "End of data range (HHMMSS)")
 
 	// Remove csv option.
 	RootCmd.PersistentFlags().BoolVar(&RmCsv, "rmcsv", false, "Remove csv file")
